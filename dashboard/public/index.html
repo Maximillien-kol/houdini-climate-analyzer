@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgriShield AI — Rwanda Climate Dashboard</title>
+<style>
+  /* ── Reset & base ───────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green:  #2d7a2d;
+    --green2: #3a9e3a;
+    --teal:   #1a7f6e;
+    --amber:  #e89c1a;
+    --red:    #c0392b;
+    --blue:   #2980b9;
+    --bg:     #0f1117;
+    --card:   #1a1d27;
+    --border: #2a2e3e;
+    --text:   #e8eaf0;
+    --muted:  #8890a8;
+    --radius: 12px;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, #0d1f0d 0%, #1a2e1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 0.75rem; }
+  .logo-icon { font-size: 1.8rem; }
+  .logo-text h1 { font-size: 1.1rem; font-weight: 700; color: var(--green2); letter-spacing: 0.02em; }
+  .logo-text p  { font-size: 0.7rem; color: var(--muted); }
+  .status-badge {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; padding: 0.35rem 0.9rem;
+    border-radius: 999px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.4s;
+  }
+  .status-dot.ok     { background: var(--green2); box-shadow: 0 0 6px var(--green2); }
+  .status-dot.error  { background: var(--red); }
+  .status-dot.loading { animation: pulse 1s infinite; background: var(--amber); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+  /* ── Region tabs ─────────────────────────────────────────────────────────── */
+  .section-title {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem;
+  }
+  .region-tabs {
+    display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem;
+  }
+  .region-btn {
+    padding: 0.5rem 1.2rem; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--card); color: var(--muted); cursor: pointer;
+    font-size: 0.85rem; font-weight: 500; transition: all 0.2s;
+  }
+  .region-btn:hover { border-color: var(--green2); color: var(--green2); }
+  .region-btn.active {
+    background: var(--green); border-color: var(--green2);
+    color: #fff; box-shadow: 0 0 12px rgba(42,158,58,0.25);
+  }
+
+  /* ── Grid ────────────────────────────────────────────────────────────────── */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+  @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .grid-3,.grid-2 { grid-template-columns: 1fr; } }
+
+  /* ── Cards ───────────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(58,158,58,0.3); }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .card-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .card-icon  { font-size: 1.4rem; }
+  .card-value { font-size: 2.4rem; font-weight: 700; line-height: 1; }
+  .card-sub   { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; }
+  .card-badge {
+    display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600; margin-top: 0.75rem;
+  }
+  .badge-green  { background: rgba(45,122,45,0.25); color: #6ee06e; border: 1px solid rgba(45,122,45,0.4); }
+  .badge-amber  { background: rgba(232,156,26,0.2);  color: #f0c040; border: 1px solid rgba(232,156,26,0.4); }
+  .badge-red    { background: rgba(192,57,43,0.2);   color: #f07060; border: 1px solid rgba(192,57,43,0.4); }
+  .badge-blue   { background: rgba(41,128,185,0.2);  color: #6ab0e0; border: 1px solid rgba(41,128,185,0.4); }
+
+  /* ── Progress bar ────────────────────────────────────────────────────────── */
+  .progress-bar {
+    height: 6px; background: rgba(255,255,255,0.06);
+    border-radius: 3px; margin-top: 0.75rem; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 3px; transition: width 0.6s ease;
+  }
+  .fill-green { background: linear-gradient(90deg, var(--green), var(--green2)); }
+  .fill-amber { background: linear-gradient(90deg, #c07800, var(--amber)); }
+  .fill-red   { background: linear-gradient(90deg, #8b0000, var(--red)); }
+  .fill-blue  { background: linear-gradient(90deg, #1a5276, var(--blue)); }
+
+  /* ── Advice panel ────────────────────────────────────────────────────────── */
+  .advice-card { margin-bottom: 2rem; }
+  .priority-banner {
+    background: linear-gradient(135deg, rgba(45,122,45,0.15), rgba(26,127,110,0.15));
+    border: 1px solid rgba(45,122,45,0.35);
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;
+  }
+  .priority-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .priority-text { font-size: 0.9rem; line-height: 1.5; }
+  .advice-cols { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; }
+  @media(max-width:700px){ .advice-cols { grid-template-columns:1fr; } }
+  .advice-group h4 {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.5rem;
+  }
+  .advice-group ul { list-style: none; }
+  .advice-group li {
+    font-size: 0.83rem; padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border); display: flex; gap: 0.5rem; align-items: flex-start;
+  }
+  .advice-group li::before { content: "›"; color: var(--green2); flex-shrink:0; }
+
+  /* ── Manual prediction form ──────────────────────────────────────────────── */
+  .form-card { margin-bottom: 2rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; margin-bottom: 1rem; }
+  @media(max-width:900px){ .form-grid { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:500px){ .form-grid { grid-template-columns: 1fr; } }
+  .field label {
+    display: block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem;
+  }
+  .field input, .field select {
+    width: 100%; padding: 0.55rem 0.75rem;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 0.85rem;
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green2); }
+  .field select option { background: #1a1d27; }
+  .btn {
+    padding: 0.65rem 1.5rem; border-radius: 8px; border: none;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--green); color: #fff;
+  }
+  .btn-primary:hover { background: var(--green2); box-shadow: 0 0 12px rgba(42,158,58,0.35); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--green2); color: var(--green2); }
+
+  /* ── Refresh bar ─────────────────────────────────────────────────────────── */
+  .refresh-row {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+    font-size: 0.8rem; color: var(--muted);
+  }
+  #refresh-progress {
+    flex: 1; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+  }
+  #refresh-fill {
+    height: 100%; background: var(--green2); width: 100%;
+    transition: width 1s linear;
+  }
+
+  /* ── Raw JSON viewer ─────────────────────────────────────────────────────── */
+  details { margin-bottom: 2rem; }
+  summary {
+    cursor: pointer; font-size: 0.78rem; color: var(--muted);
+    padding: 0.5rem 0; user-select: none;
+  }
+  summary:hover { color: var(--text); }
+  pre {
+    background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem; margin-top: 0.5rem;
+    font-size: 0.75rem; overflow: auto; max-height: 400px;
+    color: #a8b4c8; line-height: 1.6;
+  }
+
+  /* ── Skeleton loader ─────────────────────────────────────────────────────── */
+  .skeleton {
+    border-radius: 4px; background: linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.08) 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .skeleton-text { height: 1em; margin: 0.4rem 0; }
+  .skeleton-value { height: 2.4rem; margin: 0.5rem 0; }
+
+  /* ── Timestamp ───────────────────────────────────────────────────────────── */
+  .timestamp { font-size: 0.72rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <span class="logo-icon">🌱</span>
+    <div class="logo-text">
+      <h1>AgriShield AI</h1>
+      <p>Rwanda Agricultural Climate Intelligence</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <span class="timestamp" id="last-updated">—</span>
+    <div class="status-badge">
+      <div class="status-dot loading" id="status-dot"></div>
+      <span id="status-text">Connecting…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<div class="container">
+
+  <!-- Region selector -->
+  <p class="section-title">Select Region</p>
+  <div class="region-tabs" id="region-tabs">
+    <button class="region-btn active" data-region="Northern"  onclick="selectRegion(this)">🏔 Northern</button>
+    <button class="region-btn"        data-region="Southern"  onclick="selectRegion(this)">🌿 Southern</button>
+    <button class="region-btn"        data-region="Eastern"   onclick="selectRegion(this)">🌾 Eastern</button>
+    <button class="region-btn"        data-region="Western"   onclick="selectRegion(this)">🌊 Western</button>
+    <button class="region-btn"        data-region="Kigali"    onclick="selectRegion(this)">🏙 Kigali</button>
+  </div>
+
+  <!-- Auto-refresh countdown -->
+  <div class="refresh-row">
+    <span>Auto-refresh</span>
+    <div id="refresh-progress"><div id="refresh-fill"></div></div>
+    <button class="btn btn-outline" onclick="loadRealtime()" style="padding:0.3rem 0.9rem;font-size:0.78rem;">⟳ Refresh now</button>
+  </div>
+
+  <!-- ── Realtime prediction cards ──────────────────────────────────────────── -->
+  <p class="section-title">Live Predictions</p>
+  <div class="grid-3" id="cards">
+    <!-- Rain -->
+    <div class="card" id="card-rain">
+      <div class="card-header">
+        <span class="card-label">Rain Tomorrow</span>
+        <span class="card-icon">🌧</span>
+      </div>
+      <div class="card-value" id="val-rain"><span class="skeleton skeleton-value" style="width:60%">&nbsp;</span></div>
+      <div class="card-sub"  id="sub-rain"><span class="skeleton skeleton-text" style="width:80%">&nbsp;</span></div>
+      <div id="badge-rain"></div>
+      <div class="progress-bar"><div class="progress-fill fill-blue" id="bar-rain" style="width:0%"></div></div>
+    </div>
+
+    <!-- Drought -->
+    <div class="card" id="card-drought">
+      <div class="card-header">
+        <span class="card-label">Drought Risk</span>
+        <span class="card-icon">☀</span>
+      </div>
+      <div class="card-value" id="val-drought"><span class="skeleton skeleton-value" style="width:50%">&nbsp;</span></div>
+      <div class="card-sub"  id="sub-drought"><span class="skeleton skeleton-text" style="width:70%">&nbsp;</span></div>
+      <div id="badge-drought"></div>
+      <div class="progress-bar"><div class="progress-fill fill-amber" id="bar-drought" style="width:0%"></div></div>
+    </div>
+
+    <!-- Crop -->
+    <div class="card" id="card-crop">
+      <div class="card-header">
+        <span class="card-label">Crop Health</span>
+        <span class="card-icon">🌿</span>
+      </div>
+      <div class="card-value" id="val-crop"><span class="skeleton skeleton-value" style="width:55%">&nbsp;</span></div>
+      <div class="card-sub"  id="sub-crop"><span class="skeleton skeleton-text" style="width:80%">&nbsp;</span></div>
+      <div id="badge-crop"></div>
+      <div class="progress-bar"><div class="progress-fill fill-green" id="bar-crop" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Weather input cards ─────────────────────────────────────────────────── -->
+  <div class="grid-3" id="weather-cards" style="display:none">
+    <div class="card">
+      <div class="card-header"><span class="card-label">Temperature</span><span class="card-icon">🌡</span></div>
+      <div class="card-value" id="val-temp">—</div>
+      <div class="card-sub">°C</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-label">Humidity</span><span class="card-icon">💧</span></div>
+      <div class="card-value" id="val-humid">—</div>
+      <div class="card-sub">%</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-label">Rainfall</span><span class="card-icon">🌂</span></div>
+      <div class="card-value" id="val-rainfall">—</div>
+      <div class="card-sub">mm</div>
+    </div>
+  </div>
+
+  <!-- ── Priority action + advice ───────────────────────────────────────────── -->
+  <p class="section-title">AI Advice</p>
+  <div class="card advice-card" id="advice-panel">
+    <div class="priority-banner" id="priority-banner" style="display:none">
+      <span class="priority-icon">⚡</span>
+      <div class="priority-text" id="priority-text">—</div>
+    </div>
+    <div class="advice-cols" id="advice-cols">
+      <div style="color:var(--muted);font-size:0.85rem;">Load a region to see AI recommendations…</div>
+    </div>
+  </div>
+
+  <!-- ── 12-Month Forecast Chart ─────────────────────────────────────────────── -->
+  <p class="section-title" style="display:flex;align-items:center;gap:0.5rem;">
+    📅 12-Month Agricultural Forecast
+    <span id="monthly-confidence-badge" style="font-size:0.72rem;padding:2px 8px;border-radius:12px;background:#1e3a5f;color:#7dd3fc;font-weight:500;"></span>
+    <span id="monthly-source-badge" style="font-size:0.72rem;padding:2px 8px;border-radius:12px;background:#1a3a2a;color:#6ee7b7;font-weight:500;"></span>
+  </p>
+  <div class="card" style="padding:1.25rem;">
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+      <select id="monthly-crop" style="background:var(--surface-a);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.82rem;">
+        <option value="maize">Maize</option>
+        <option value="beans">Beans</option>
+        <option value="sorghum">Sorghum</option>
+        <option value="cassava">Cassava</option>
+        <option value="irish_potato">Irish Potato</option>
+      </select>
+      <button class="btn btn-outline" style="font-size:0.8rem;padding:4px 14px;" onclick="loadMonthlyForecast()">↺ Refresh forecast</button>
+      <span id="monthly-status" style="font-size:0.78rem;color:var(--muted);"></span>
+    </div>
+    <div style="position:relative;height:260px;">
+      <canvas id="monthly-chart"></canvas>
+    </div>
+    <!-- Month table -->
+    <div style="overflow-x:auto;margin-top:1.25rem;">
+      <table id="monthly-table" style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+        <thead>
+          <tr style="color:var(--muted);border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:4px 8px;">Month</th>
+            <th style="text-align:right;padding:4px 8px;">Rain (mm)</th>
+            <th style="text-align:right;padding:4px 8px;">Temp (°C)</th>
+            <th style="text-align:right;padding:4px 8px;">Rain Prob</th>
+            <th style="text-align:right;padding:4px 8px;">Drought</th>
+            <th style="text-align:right;padding:4px 8px;">Crop Health</th>
+            <th style="text-align:right;padding:4px 8px;">Yield (kg/ha)</th>
+            <th style="text-align:center;padding:4px 8px;">Source</th>
+          </tr>
+        </thead>
+        <tbody id="monthly-tbody"><tr><td colspan="8" style="color:var(--muted);padding:8px;">Loading forecast…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Manual prediction form ─────────────────────────────────────────────── -->
+  <p class="section-title">Manual Prediction</p>
+  <div class="card form-card">
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">
+      Override the realtime weather data and run a custom scenario:
+    </p>
+    <div class="form-grid">
+      <div class="field">
+        <label>Region</label>
+        <select id="f-region">
+          <option>Northern</option><option>Southern</option>
+          <option selected>Eastern</option><option>Western</option><option>Kigali</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Season</label>
+        <select id="f-season">
+          <option value="rainy_A">Rainy A (Sep–Nov)</option>
+          <option value="rainy_B">Rainy B (Mar–May)</option>
+          <option value="dry">Dry (Jun–Aug, Dec–Feb)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Crop Type</label>
+        <select id="f-crop">
+          <option>maize</option><option>beans</option><option>sorghum</option>
+          <option>cassava</option><option>sweet_potato</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Soil Type</label>
+        <select id="f-soil">
+          <option>loam</option><option>clay</option><option>sandy</option>
+          <option>silty</option><option>volcanic</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Temperature (°C)</label>
+        <input type="number" id="f-temp" value="22" step="0.5" min="-5" max="45"/>
+      </div>
+      <div class="field">
+        <label>Humidity (%)</label>
+        <input type="number" id="f-humid" value="65" step="1" min="0" max="100"/>
+      </div>
+      <div class="field">
+        <label>Rainfall (mm)</label>
+        <input type="number" id="f-rain" value="40" step="1" min="0" max="300"/>
+      </div>
+      <div class="field">
+        <label>Soil Moisture (%)</label>
+        <input type="number" id="f-sm" value="35" step="1" min="0" max="100"/>
+      </div>
+      <div class="field">
+        <label>Wind Speed (km/h)</label>
+        <input type="number" id="f-wind" value="10" step="0.5" min="0" max="150"/>
+      </div>
+      <div class="field">
+        <label>Solar Rad. (W/m²)</label>
+        <input type="number" id="f-solar" value="210" step="5" min="0" max="1200"/>
+      </div>
+      <div class="field">
+        <label>NDVI</label>
+        <input type="number" id="f-ndvi" value="0.62" step="0.01" min="0" max="1"/>
+      </div>
+      <div class="field">
+        <label>Drought Index</label>
+        <input type="number" id="f-drought" value="0.22" step="0.01" min="0" max="1"/>
+      </div>
+      <div class="field">
+        <label>Pest Pressure</label>
+        <input type="number" id="f-pest" value="0.28" step="0.01" min="0" max="1"/>
+      </div>
+      <div class="field">
+        <label>Fertilizer (kg/ha)</label>
+        <input type="number" id="f-fert" value="50" step="5" min="0" max="500"/>
+      </div>
+      <div class="field">
+        <label>Irrigation (mm)</label>
+        <input type="number" id="f-irr" value="0" step="1" min="0" max="200"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="submit-btn" onclick="submitManual()">▶ Run Prediction</button>
+      <button class="btn btn-outline" onclick="resetForm()">↺ Reset</button>
+      <span id="form-status" style="font-size:0.8rem;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- ── Manual result cards ────────────────────────────────────────────────── -->
+  <div id="manual-result" style="display:none">
+    <p class="section-title">Manual Prediction Result</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-header"><span class="card-label">Rain Tomorrow</span><span class="card-icon">🌧</span></div>
+        <div class="card-value" id="m-rain">—</div>
+        <div class="card-sub"  id="m-rain-prob">—</div>
+        <div id="m-rain-badge"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-label">Drought Risk</span><span class="card-icon">☀</span></div>
+        <div class="card-value" id="m-drought">—</div>
+        <div class="card-sub"  id="m-drought-lvl">—</div>
+        <div id="m-drought-badge"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-label">Crop Health</span><span class="card-icon">🌿</span></div>
+        <div class="card-value" id="m-crop">—</div>
+        <div class="card-sub"  id="m-crop-yield">—</div>
+        <div id="m-crop-badge"></div>
+      </div>
+    </div>
+    <div class="card advice-card" id="m-advice-panel">
+      <div class="priority-banner" id="m-priority-banner">
+        <span class="priority-icon">⚡</span>
+        <div class="priority-text" id="m-priority-text">—</div>
+      </div>
+      <div class="advice-cols" id="m-advice-cols"></div>
+    </div>
+  </div>
+
+  <!-- ── Raw JSON (monthly forecast) ─────────────────────────────────────────── -->
+  <details id="raw-monthly-section" style="margin-top:0.5rem;">
+    <summary style="cursor:pointer;color:var(--muted);font-size:0.8rem;">▾ View raw monthly forecast JSON</summary>
+    <pre id="raw-monthly-json" style="font-size:0.75rem;">No data yet.</pre>
+  </details>
+
+  <!-- ── Raw JSON ───────────────────────────────────────────────────────────── -->
+  <details id="raw-section">
+    <summary>▾ View raw API response</summary>
+    <pre id="raw-json">No data yet.</pre>
+  </details>
+
+</div><!-- /container -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+/* ── State ─────────────────────────────────────────────────────────────────── */
+let currentRegion = "Northern";
+let refreshTimer  = null;
+let countdownTimer = null;
+const REFRESH_INTERVAL = 60; // seconds
+let countdown = REFRESH_INTERVAL;
+
+/* ── Init ──────────────────────────────────────────────────────────────────── */
+let monthlyChart = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  checkHealth();
+  loadRealtime();
+  startAutoRefresh();
+  loadMonthlyForecast();
+});
+
+/* ── Health check ──────────────────────────────────────────────────────────── */
+async function checkHealth() {
+  const dot  = document.getElementById("status-dot");
+  const text = document.getElementById("status-text");
+  dot.className = "status-dot loading";
+  text.textContent = "Connecting…";
+  try {
+    const r = await fetch("/api/health");
+    const d = await r.json();
+    if (d.status === "ok") {
+      dot.className  = "status-dot ok";
+      text.textContent = "API Online";
+    } else {
+      dot.className  = "status-dot error";
+      text.textContent = "API Error";
+    }
+  } catch(e) {
+    dot.className  = "status-dot error";
+    text.textContent = "Unreachable";
+  }
+}
+
+/* ── Region selection ──────────────────────────────────────────────────────── */
+function selectRegion(btn) {
+  document.querySelectorAll(".region-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentRegion = btn.dataset.region;
+  loadRealtime();
+  loadMonthlyForecast();
+}
+
+/* ── 12-Month Forecast ─────────────────────────────────────────────────────── */
+async function loadMonthlyForecast() {
+  const status   = document.getElementById("monthly-status");
+  const cropSel  = document.getElementById("monthly-crop");
+  const crop     = cropSel ? cropSel.value : "maize";
+  status.textContent = "Loading 12-month forecast…";
+
+  try {
+    const r = await fetch(`/api/monthly/${currentRegion}?crop_type=${crop}`);
+    const d = await r.json();
+    document.getElementById("raw-monthly-json").textContent = JSON.stringify(d, null, 2);
+    if (!d.success || !d.forecast) throw new Error(d.error || "Bad response");
+    renderMonthlyChart(d.forecast);
+    renderMonthlyTable(d.forecast);
+    status.textContent = `✓ Loaded ${d.forecast.length} months`;
+  } catch(e) {
+    status.textContent = "Error: " + e.message;
+    document.getElementById("monthly-tbody").innerHTML =
+      `<tr><td colspan="8" style="color:#f87171;padding:8px;">${e.message}</td></tr>`;
+  }
+}
+
+function renderMonthlyChart(forecast) {
+  const labels     = forecast.map(m => m.month);
+  const rainProbs  = forecast.map(m => +(m.rain_probability  * 100).toFixed(1));
+  const droughts   = forecast.map(m => +(m.drought_index     * 100).toFixed(1));
+  const crops      = forecast.map(m => +m.crop_health_score.toFixed(1));
+  const rainMm     = forecast.map(m => +m.rainfall_mm);
+
+  // Highlight current month (index 0)
+  const pointRadii = forecast.map((_, i) => i === 0 ? 7 : 3);
+
+  const ctx = document.getElementById("monthly-chart").getContext("2d");
+  if (monthlyChart) monthlyChart.destroy();
+
+  monthlyChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Rain Probability (%)",
+          data: rainProbs,
+          borderColor: "#38bdf8",
+          backgroundColor: "rgba(56,189,248,0.15)",
+          pointRadius: pointRadii,
+          pointBackgroundColor: forecast.map((_, i) => i === 0 ? "#7dd3fc" : "#38bdf8"),
+          tension: 0.4, fill: true, yAxisID: "y",
+        },
+        {
+          label: "Drought Risk (%)",
+          data: droughts,
+          borderColor: "#fb923c",
+          backgroundColor: "rgba(251,146,60,0.12)",
+          pointRadius: pointRadii,
+          pointBackgroundColor: forecast.map((_, i) => i === 0 ? "#fdba74" : "#fb923c"),
+          tension: 0.4, fill: true, yAxisID: "y",
+        },
+        {
+          label: "Crop Health (0-100)",
+          data: crops,
+          borderColor: "#34d399",
+          backgroundColor: "rgba(52,211,153,0.12)",
+          pointRadius: pointRadii,
+          pointBackgroundColor: forecast.map((_, i) => i === 0 ? "#6ee7b7" : "#34d399"),
+          tension: 0.4, fill: false, yAxisID: "y",
+        },
+        {
+          label: "Rainfall (mm)",
+          data: rainMm,
+          borderColor: "#a78bfa",
+          backgroundColor: "rgba(167,139,250,0.10)",
+          pointRadius: pointRadii,
+          pointBackgroundColor: forecast.map((_, i) => i === 0 ? "#c4b5fd" : "#a78bfa"),
+          tension: 0.4, fill: false, yAxisID: "y2", borderDash: [4,3],
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#e2e8f0", font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            title: ctx => ctx[0].label,
+            label: ctx => {
+              const ds = ctx.dataset.label;
+              const v  = ctx.parsed.y;
+              if (ds.includes("Rainfall")) return `  ${ds}: ${v} mm`;
+              return `  ${ds}: ${v}%`;
+            },
+          },
+          backgroundColor: "#1e293b",
+          titleColor: "#e2e8f0",
+          bodyColor: "#94a3b8",
+          borderColor: "#334155",
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: "#94a3b8", font: { size: 10 }, maxRotation: 45 },
+          grid:  { color: "rgba(255,255,255,0.05)" },
+        },
+        y: {
+          position: "left",
+          min: 0, max: 100,
+          ticks: { color: "#94a3b8", font: { size: 10 } },
+          grid:  { color: "rgba(255,255,255,0.06)" },
+          title: { display: true, text: "% / score", color: "#64748b", font: { size: 10 } },
+        },
+        y2: {
+          position: "right",
+          min: 0,
+          ticks: { color: "#a78bfa", font: { size: 10 } },
+          grid:  { drawOnChartArea: false },
+          title: { display: true, text: "Rainfall (mm)", color: "#a78bfa", font: { size: 10 } },
+        },
+      },
+    }
+  });
+
+  // Badges
+  const sources = [...new Set(forecast.map(m => m.data_source))];
+  const srcText = sources.includes("seasonal_api") ? "SEAS5 + Normals" : "Climate Normals";
+  const srcBadge = document.getElementById("monthly-source-badge");
+  if (srcBadge) srcBadge.textContent = srcText;
+  const confBadge = document.getElementById("monthly-confidence-badge");
+  if (confBadge) confBadge.textContent = sources.includes("seasonal_api") ? "High confidence (1-6 mo)" : "Indicative";
+}
+
+function renderMonthlyTable(forecast) {
+  const tbody = document.getElementById("monthly-tbody");
+  const droughtColors = { none: "#34d399", mild: "#facc15", moderate: "#fb923c", severe: "#f87171", extreme: "#ef4444" };
+  tbody.innerHTML = forecast.map((m, i) => {
+    const dColor = droughtColors[m.drought_level?.replace(/_dry_season/,"")] || "#e2e8f0";
+    const hColor = m.crop_health_score > 65 ? "#34d399" : m.crop_health_score > 40 ? "#facc15" : "#f87171";
+    const rColor = m.rain_probability > 0.6 ? "#38bdf8" : m.rain_probability > 0.3 ? "#94a3b8" : "#64748b";
+    const isCurrent = i === 0;
+    return `<tr style="border-bottom:1px solid var(--border);${isCurrent ? 'background:rgba(56,189,248,0.06);font-weight:600;' : ''}">
+      <td style="padding:5px 8px;">${isCurrent ? '▶ ' : ''}${m.month}</td>
+      <td style="text-align:right;padding:5px 8px;">${m.rainfall_mm}</td>
+      <td style="text-align:right;padding:5px 8px;">${m.temperature_c}</td>
+      <td style="text-align:right;padding:5px 8px;color:${rColor};">${(m.rain_probability*100).toFixed(0)}%</td>
+      <td style="text-align:right;padding:5px 8px;color:${dColor};">${m.drought_level}</td>
+      <td style="text-align:right;padding:5px 8px;color:${hColor};">${m.crop_health_score}</td>
+      <td style="text-align:right;padding:5px 8px;">${m.yield_kg_ha}</td>
+      <td style="text-align:center;padding:5px 8px;font-size:0.7rem;color:var(--muted);">${m.data_source === 'seasonal_api' ? '🛰 SEAS5' : '📊 Normals'}</td>
+    </tr>`;
+  }).join("");
+}
+
+/* ── Load realtime data ────────────────────────────────────────────────────── */
+async function loadRealtime() {
+  setLoading();
+  countdown = REFRESH_INTERVAL;
+  try {
+    const r = await fetch(`/api/realtime/${currentRegion}`);
+    const d = await r.json();
+    document.getElementById("raw-json").textContent = JSON.stringify(d, null, 2);
+    renderPredictions(d);
+    document.getElementById("last-updated").textContent =
+      "Updated " + new Date().toLocaleTimeString();
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+/* ── Set skeleton loading state ────────────────────────────────────────────── */
+function setLoading() {
+  ["val-rain","val-drought","val-crop","sub-rain","sub-drought","sub-crop"].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<span class="skeleton skeleton-text" style="width:70%">&nbsp;</span>';
+  });
+  ["badge-rain","badge-drought","badge-crop"].forEach(id => {
+    document.getElementById(id).innerHTML = "";
+  });
+  document.getElementById("bar-rain").style.width    = "0%";
+  document.getElementById("bar-drought").style.width = "0%";
+  document.getElementById("bar-crop").style.width    = "0%";
+}
+
+/* ── Render prediction data ────────────────────────────────────────────────── */
+function renderPredictions(d) {
+  const p = d.predictions || d.report?.predictions || {};
+
+  // Rain
+  const rainProb   = p.rain?.probability ?? p.rain_probability ?? 0;
+  const rainYes    = p.rain?.rain_tomorrow ?? (rainProb > 0.5);
+  const rainPct    = Math.round(rainProb * 100);
+  set("val-rain",    rainYes ? "YES" : "NO");
+  set("sub-rain",    `Probability: ${rainPct}%`);
+  set("badge-rain",  badge(rainYes ? "Rain expected" : "No rain likely", rainYes ? "blue" : "green"));
+  document.getElementById("bar-rain").style.width = rainPct + "%";
+
+  // Drought
+  const droughtScore = p.drought?.score ?? p.drought_index ?? 0;
+  const droughtLvl   = p.drought?.level ?? classify_drought(droughtScore);
+  const droughtPct   = Math.round(droughtScore * 100);
+  const droughtColor = droughtPct < 30 ? "green" : droughtPct < 60 ? "amber" : "red";
+  set("val-drought", droughtPct + "%");
+  set("sub-drought", `Level: ${droughtLvl}`);
+  set("badge-drought", badge(droughtLvl, droughtColor));
+  document.getElementById("bar-drought").className = `progress-fill fill-${droughtColor}`;
+  document.getElementById("bar-drought").style.width = droughtPct + "%";
+
+  // Crop
+  const cropScore = p.crop_health?.score ?? p.health_score ?? 0;
+  const cropYield = p.crop_health?.yield_estimate_kg_ha ?? "—";
+  const cropPct   = Math.round(cropScore);
+  const cropColor  = cropPct > 65 ? "green" : cropPct > 40 ? "amber" : "red";
+  set("val-crop",    cropPct + "/100");
+  set("sub-crop",    `Yield est: ${cropYield} kg/ha`);
+  set("badge-crop",  badge(cropPct > 65 ? "Good" : cropPct > 40 ? "Fair" : "Poor", cropColor));
+  document.getElementById("bar-crop").className = `progress-fill fill-${cropColor}`;
+  document.getElementById("bar-crop").style.width = cropPct + "%";
+
+  // Weather inputs (if present)
+  const w = d.weather_input || d.inputs || d.report?.location || {};
+  if (w.temperature_c != null) {
+    set("val-temp",    w.temperature_c?.toFixed(1) || "—");
+    set("val-humid",   w.humidity_pct?.toFixed(0) || "—");
+    set("val-rainfall",w.rainfall_mm?.toFixed(1) || "—");
+    document.getElementById("weather-cards").style.display = "grid";
+  }
+
+  // Advice
+  const advice   = d.advice || d.report?.advice || {};
+  const priority = d.priority_action || d.report?.priority_action || "";
+  renderAdvice(advice, priority, "priority-banner", "priority-text", "advice-cols");
+}
+
+/* ── Advice rendering ──────────────────────────────────────────────────────── */
+function renderAdvice(advice, priority, bannerId, textId, colsId) {
+  const banner = document.getElementById(bannerId);
+  if (priority) {
+    banner.style.display = "flex";
+    document.getElementById(textId).textContent = priority;
+  } else {
+    banner.style.display = "none";
+  }
+  const labels = {
+    rain_management: "🌧 Rain Management",
+    drought_management: "☀ Drought Management",
+    crop_management: "🌾 Crop Management",
+    seasonal_tips: "📅 Seasonal Tips"
+  };
+  const cols = document.getElementById(colsId);
+  if (!advice || !Object.keys(advice).length) {
+    cols.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No advice available.</p>';
+    return;
+  }
+  cols.innerHTML = Object.entries(advice).map(([key, items]) => `
+    <div class="advice-group">
+      <h4>${labels[key] || key}</h4>
+      <ul>${(items||[]).map(i => `<li>${i}</li>`).join("")}</ul>
+    </div>
+  `).join("");
+}
+
+/* ── Manual prediction ─────────────────────────────────────────────────────── */
+async function submitManual() {
+  const btn = document.getElementById("submit-btn");
+  const status = document.getElementById("form-status");
+  btn.disabled = true;
+  status.textContent = "Running prediction…";
+  const body = {
+    region:                    document.getElementById("f-region").value,
+    season:                    document.getElementById("f-season").value,
+    crop_type:                 document.getElementById("f-crop").value,
+    soil_type:                 document.getElementById("f-soil").value,
+    temperature_c:         +document.getElementById("f-temp").value,
+    humidity_pct:          +document.getElementById("f-humid").value,
+    rainfall_mm:           +document.getElementById("f-rain").value,
+    soil_moisture_pct:     +document.getElementById("f-sm").value,
+    wind_speed_kmh:        +document.getElementById("f-wind").value,
+    solar_radiation_wm2:   +document.getElementById("f-solar").value,
+    ndvi:                  +document.getElementById("f-ndvi").value,
+    drought_index:         +document.getElementById("f-drought").value,
+    pest_pressure_index:   +document.getElementById("f-pest").value,
+    fertilizer_applied_kg_ha: +document.getElementById("f-fert").value,
+    irrigation_applied_mm: +document.getElementById("f-irr").value,
+  };
+  try {
+    const r = await fetch("/api/predict", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    document.getElementById("raw-json").textContent = JSON.stringify(d, null, 2);
+    renderManualResult(d);
+    status.textContent = "✓ Done";
+    document.getElementById("manual-result").style.display = "block";
+    document.getElementById("manual-result").scrollIntoView({behavior:"smooth"});
+  } catch(e) {
+    status.textContent = "Error: " + e.message;
+  }
+  btn.disabled = false;
+}
+
+function renderManualResult(d) {
+  const p = d.predictions || d.report?.predictions || {};
+  const rainProb   = p.rain?.probability ?? 0;
+  const rainYes    = p.rain?.rain_tomorrow ?? (rainProb > 0.5);
+  const droughtScore = p.drought?.score ?? 0;
+  const droughtLvl = p.drought?.level ?? classify_drought(droughtScore);
+  const cropScore  = p.crop_health?.score ?? 0;
+  const cropYield  = p.crop_health?.yield_estimate_kg_ha ?? "—";
+  const droughtColor = droughtScore < 0.3 ? "green" : droughtScore < 0.6 ? "amber" : "red";
+  const cropColor  = cropScore > 65 ? "green" : cropScore > 40 ? "amber" : "red";
+
+  set("m-rain",       rainYes ? "YES" : "NO");
+  set("m-rain-prob",  `Probability: ${Math.round(rainProb*100)}%`);
+  set("m-rain-badge", badge(rainYes ? "Rain expected" : "No rain", rainYes ? "blue" : "green"));
+  set("m-drought",    Math.round(droughtScore*100) + "%");
+  set("m-drought-lvl",`Level: ${droughtLvl}`);
+  set("m-drought-badge", badge(droughtLvl, droughtColor));
+  set("m-crop",       Math.round(cropScore) + "/100");
+  set("m-crop-yield", `Yield est: ${cropYield} kg/ha`);
+  set("m-crop-badge", badge(cropScore > 65 ? "Good" : cropScore > 40 ? "Fair" : "Poor", cropColor));
+
+  const advice   = d.advice || d.report?.advice || {};
+  const priority = d.priority_action || d.report?.priority_action || "";
+  renderAdvice(advice, priority, "m-priority-banner", "m-priority-text", "m-advice-cols");
+}
+
+/* ── Auto-refresh ──────────────────────────────────────────────────────────── */
+function startAutoRefresh() {
+  clearInterval(refreshTimer);
+  clearInterval(countdownTimer);
+  countdown = REFRESH_INTERVAL;
+  refreshTimer = setInterval(() => { loadRealtime(); }, REFRESH_INTERVAL * 1000);
+  countdownTimer = setInterval(() => {
+    countdown--;
+    const fill = document.getElementById("refresh-fill");
+    fill.style.width = (countdown / REFRESH_INTERVAL * 100) + "%";
+    if (countdown <= 0) countdown = REFRESH_INTERVAL;
+  }, 1000);
+}
+
+/* ── Helpers ───────────────────────────────────────────────────────────────── */
+function set(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+function badge(text, color) {
+  return `<span class="card-badge badge-${color}">${text}</span>`;
+}
+function classify_drought(score) {
+  if (score < 0.2) return "none";
+  if (score < 0.4) return "mild";
+  if (score < 0.6) return "moderate";
+  if (score < 0.8) return "severe";
+  return "extreme";
+}
+function showError(msg) {
+  ["val-rain","val-drought","val-crop"].forEach(id => set(id, "Error"));
+  ["sub-rain","sub-drought","sub-crop"].forEach(id => set(id, msg));
+}
+function resetForm() {
+  document.getElementById("f-temp").value   = 22;
+  document.getElementById("f-humid").value  = 65;
+  document.getElementById("f-rain").value   = 40;
+  document.getElementById("f-sm").value     = 35;
+  document.getElementById("f-wind").value   = 10;
+  document.getElementById("f-solar").value  = 210;
+  document.getElementById("f-ndvi").value   = 0.62;
+  document.getElementById("f-drought").value= 0.22;
+  document.getElementById("f-pest").value   = 0.28;
+  document.getElementById("f-fert").value   = 50;
+  document.getElementById("f-irr").value    = 0;
+  document.getElementById("form-status").textContent = "";
+}
+</script>
+</body>
+</html>

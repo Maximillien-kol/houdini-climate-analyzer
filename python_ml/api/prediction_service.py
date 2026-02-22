@@ -113,6 +113,30 @@ def _safe_preprocess(record: dict, model_name: str) -> np.ndarray:
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "service": "AgriShield AI — Rwanda Agricultural Prediction API",
+        "version": "1.0.0",
+        "status": "running",
+        "endpoints": {
+            "health":            "GET  /health",
+            "predict_full":      "POST /predict/full",
+            "predict_rain":      "POST /predict/rain",
+            "predict_drought":   "POST /predict/drought",
+            "predict_crop":      "POST /predict/crop",
+            "predict_realtime":  "GET  /predict/realtime",
+            "predict_realtime_region": "GET  /predict/realtime/<region>",
+            "forecast":          "GET  /forecast/<region>",
+            "predict_monthly":   "GET  /predict/monthly/<region>?crop_type=maize",
+            "feedback_submit":   "POST /feedback",
+            "feedback_summary":  "GET  /feedback/summary",
+        },
+        "docs": "https://github.com/Maximillien-kol/houdini-climate-analyzer",
+        "regions": ["Northern", "Southern", "Eastern", "Western", "Kigali"],
+    })
+
+
 @app.route("/health", methods=["GET"])
 def health():
     _load_models()
@@ -310,6 +334,58 @@ def predict_realtime_region(region):
 
     except Exception as e:
         log.exception(f"Error in /predict/realtime/{region}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── GET /predict/monthly ────────────────────────────────────────────────────
+@app.route("/predict/monthly", methods=["GET"])
+@app.route("/predict/monthly/<region>", methods=["GET"])
+def predict_monthly(region: str = None):
+    """
+    Generate 12-month agricultural climate forecast for a Rwanda province.
+    Uses SEAS5 seasonal API for near-term months, climate normals for longer horizons.
+    Query params:
+      region           (str)   : Rwanda province (default: Northern)
+      crop_type        (str)   : maize / beans / sorghum / irish_potato / cassava
+      fertilizer_kg_ha (float) : fertilizer amount (default: 50)
+      irrigation_mm    (float) : monthly irrigation (default: 0)
+    """
+    try:
+        from utils.monthly_forecaster import generate_12month_forecast
+
+        region_val    = region or request.args.get("region", "Northern")
+        crop_type     = request.args.get("crop_type", "maize")
+        fertilizer    = float(request.args.get("fertilizer_kg_ha", 50))
+        irrigation    = float(request.args.get("irrigation_mm", 0))
+
+        valid_regions = ["Northern", "Southern", "Eastern", "Western", "Kigali"]
+        if region_val not in valid_regions:
+            return jsonify({"success": False,
+                            "error": f"Invalid region. Use one of: {valid_regions}"}), 400
+
+        _load_models()
+
+        # Pass loaded model objects if available
+        model_objs = None if "demo" in MODELS else MODELS
+
+        forecast = generate_12month_forecast(
+            region=region_val,
+            crop_type=crop_type,
+            fertilizer_kg_ha=fertilizer,
+            irrigation_mm=irrigation,
+            models=model_objs,
+        )
+
+        return jsonify({
+            "success":  True,
+            "region":   region_val,
+            "crop":     crop_type,
+            "months":   12,
+            "forecast": forecast,
+        })
+
+    except Exception as e:
+        log.exception(f"/predict/monthly/{region} error")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
