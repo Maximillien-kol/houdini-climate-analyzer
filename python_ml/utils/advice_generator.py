@@ -37,10 +37,24 @@ def _rain_advice(rain_result: dict) -> list[str]:
     return tips
 
 
-def _drought_advice(drought_result: dict) -> list[str]:
+def _drought_advice(drought_result: dict, season: str = "dry") -> list[str]:
     tips = []
     level = drought_result.get("level", "none")
     score = drought_result.get("score", 0)
+
+    # During dry season a high drought index is climatologically NORMAL —
+    # Rwanda typically receives <30 mm/month in June–August and dry spells
+    # in January–February. Reframe advice as seasonal management.
+    if season == "dry" and level in ("severe", "extreme"):
+        tips.append(f"Dry season conditions (drought index {score:.2f}) — "
+                    "elevated stress is normal for this time of year.")
+        tips.append("Prioritise soil moisture conservation: apply mulch "
+                    "and avoid tilling to reduce evaporation.")
+        tips.append("Use any available irrigation water early in the morning "
+                    "to minimise evaporation losses.")
+        tips.append("Prepare water storage (reservoirs, tanks) before the "
+                    "next rainy season begins.")
+        return tips
 
     if level == "none":
         tips.append("Soil moisture is adequate. Maintain current irrigation schedule.")
@@ -52,11 +66,11 @@ def _drought_advice(drought_result: dict) -> list[str]:
         tips.append("Prioritise water for high-value crops (beans, vegetables).")
         tips.append("Consider early harvest of near-mature crops to avoid losses.")
     elif level == "severe":
-        tips.append("SEVERE drought alert! Reduce field area under cultivation temporarily.")
+        tips.append("Severe drought alert — reduce field area under cultivation temporarily.")
         tips.append("Contact local agricultural office for emergency water supply assistance.")
         tips.append("Apply drought-tolerant varieties in any new planting.")
     elif level == "extreme":
-        tips.append("EXTREME DROUGHT EMERGENCY. Activate all water reservoirs immediately.")
+        tips.append("Extreme drought emergency. Activate all water reservoirs immediately.")
         tips.append("Report crop loss to Rwanda Agriculture Board (RAB) for insurance eligibility.")
         tips.append("Switch to drought-resistant crops: sorghum or cassava.")
     return tips
@@ -147,28 +161,40 @@ def generate_advice(
         },
         "advice": {
             "rain_management": _rain_advice(rain_result),
-            "drought_management": _drought_advice(drought_result),
+            "drought_management": _drought_advice(drought_result, record.get("season", "dry")),
             "crop_management": _crop_health_advice(health_score, yield_est, pest_result),
             "seasonal_tips": _general_season_advice(
                 record.get("season", "dry"),
                 record.get("crop_type", "crop")
             ),
         },
-        "priority_action": _priority_action(drought_result, rain_result, health_score),
+        "priority_action": _priority_action(drought_result, rain_result, health_score, record.get("season", "dry")),
         "feedback_id": _generate_feedback_id(),
     }
 
     return advice
 
 
-def _priority_action(drought_result: dict, rain_result: dict, health: float) -> str:
-    """Return the single most urgent action."""
+def _priority_action(drought_result: dict, rain_result: dict, health: float,
+                      season: str = "dry") -> str:
+    """Return the single most urgent action, season-aware."""
     drought_level = drought_result.get("level", "none")
+    rain_prob     = rain_result.get("probability", 0)
+    rain_tomorrow = rain_result.get("rain_tomorrow", False)
+
+    # Dry season: elevated drought is normal — do not declare emergency
+    if season == "dry" and drought_level in ("extreme", "severe"):
+        if rain_tomorrow:
+            return (f"Rain forecast tomorrow ({rain_prob*100:.0f}% confidence) — "
+                    "good opportunity to replenish soil moisture during dry season.")
+        return ("Dry season in progress — conserve soil moisture and "
+                "prepare irrigation infrastructure for next rainy season.")
+
     if drought_level in ("extreme", "severe"):
         return "URGENT: Address water stress immediately — drought emergency declared."
     if health < 35:
         return "URGENT: Crop health critical — consult agronomist today."
-    if rain_result.get("probability", 0) > 0.85:
+    if rain_prob > 0.85:
         return "Rain imminent — secure drying areas and postpone field operations."
     if drought_level == "moderate":
         return "Activate supplemental irrigation — moderate drought developing."

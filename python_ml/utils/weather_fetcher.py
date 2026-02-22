@@ -75,9 +75,16 @@ MONTHLY_NORMALS_MM = {
     1:50, 2:70, 3:130, 4:160, 5:120, 6:30, 7:15, 8:20, 9:80, 10:110, 11:120, 12:60
 }
 
-def _drought_index(rainfall_mm: float, month: int) -> float:
-    normal = MONTHLY_NORMALS_MM.get(month, 80)
-    return round(max(0.0, min(1.0, 1.0 - (rainfall_mm / (normal + 1)))), 4)
+def _drought_index(rainfall_mm: float, month: int, days: int = 2) -> float:
+    """
+    Compare rainfall over `days` against what's climatologically expected
+    for that same number of days. This avoids the bug where a 2-day total
+    (e.g. 6 mm) is compared against a full monthly normal (e.g. 70 mm),
+    which always produces near-1.0 (extreme) drought.
+    """
+    monthly_normal = MONTHLY_NORMALS_MM.get(month, 80)
+    period_normal  = monthly_normal / 30.0 * days   # expected mm over `days` days
+    return round(max(0.0, min(1.0, 1.0 - (rainfall_mm / (period_normal + 1)))), 4)
 
 
 # ── CURRENT / FORECAST weather ────────────────────────────────────────────────
@@ -130,7 +137,11 @@ def fetch_current_weather(region: str = "Northern", crop_type: str = "maize",
 
     ndvi          = _estimate_ndvi(rainfall_mm, season, temp_c)
     pest_pressure = _estimate_pest_pressure(humidity, temp_c, season)
-    drought_idx   = _drought_index(rainfall_mm, month)
+    # Use the 2-day forecast total vs 2-day climatological normal.
+    # This prevents near-1.0 drought scores simply because it's not
+    # raining at this exact moment.
+    forecast_total_mm = sum(precip_sums[:2]) if precip_sums else rainfall_mm
+    drought_idx   = _drought_index(forecast_total_mm, month, days=2)
 
     record = {
         # identifiers
