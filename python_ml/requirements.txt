@@ -1,0 +1,28 @@
+# AgriShield AI — Python ML Service Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core data science
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+joblib>=1.3.0
+
+# Deep learning
+torch>=2.2.0
+torchvision>=0.17.0
+
+# Web API
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# HTTP (for demo mode & Open-Meteo)
+requests>=2.31.0
+
+# Groq LLM (fast inference for AI-generated advice)
+groq>=0.9.0
+
+# Environment variable loading
+python-dotenv>=1.0.0
+
+# Optional: time-series (Prophet-style analysis)
+# prophet>=1.1.5   # uncomment if you have C++ build tools

@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env.local
+
+# Model artifacts (large binary files)
+python_ml/artifacts/*.pkl
+python_ml/artifacts/*.pt
+
+# Data files (generated / sensitive)
+python_ml/data/rwanda_agri_climate.csv
+python_ml/data/feedback_log.jsonl
+python_ml/data/*.csv
+
+# PNG forecast charts (generated output)
+python_ml/forecast_*.png
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Environment / secrets
+.env
+*.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
