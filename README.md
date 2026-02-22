@@ -1,7 +1,7 @@
-# AgriShield AI
+# Rwac V.0.1
 ### Food Insecurity & Agricultural Vulnerability to Climate Shocks
 
-An end-to-end AI system for Rwandan farmers — collects climate and crop
+An end-to-end AI system for Rwandan farmers - collects climate and crop
 data, runs three machine-learning models, and delivers concrete,
 prioritised advice through a REST API.
 
@@ -15,7 +15,7 @@ python run.py
 
 This single command will:
 1. Install all Python and Node.js dependencies
-2. Train all AI models — automatically includes any PDF/DOCX forecast
+2. Train all AI models - automatically includes any PDF/DOCX forecast
    documents found in `python_ml/data/documents/monthly_forecasts/`
 3. Start the Python ML service on **port 5001**
 4. Start the Node.js API gateway on **port 3000**
@@ -106,17 +106,17 @@ learn from official Rwanda climate signals.
 If you prefer to run each component individually:
 
 ```bash
-# 1 — Python dependencies
+# 1 - Python dependencies
 cd python_ml
 pip install -r requirements.txt
 
-# 2 — Train models (includes documents if present)
+# 2 - Train models (includes documents if present)
 python main.py retrain
 
-# 3 — Start Python ML service
+# 3 - Start Python ML service
 python main.py serve
 
-# 4 — In a second terminal: Node.js API
+# 4 - In a second terminal: Node.js API
 cd nodejs_api
 npm install
 npm start
@@ -124,7 +124,7 @@ npm start
 
 ---
 
-## API Reference (Node.js — port 3000)
+## API Reference (Node.js - port 3000)
 
 ### System
 | Method | Endpoint | Description |
@@ -181,7 +181,7 @@ npm start
       "crop_management":    ["..."],
       "seasonal_tips":      ["..."]
     },
-    "priority_action": "Rain imminent — postpone field operations.",
+    "priority_action": "Rain imminent - postpone field operations.",
     "feedback_id": "A1B2C3D4",
     "summary": { "in_one_line": "...", "rain_status": "...", ... }
   }
@@ -214,21 +214,21 @@ npm start
 
 ## How the System Works (Step by Step)
 
-1. **Collect Data** — Sensors/satellites/drones gather weather, soil,
+1. **Collect Data** - Sensors/satellites/drones gather weather, soil,
    crop, and pest data. The `/api/data/simulate` endpoint mimics this.
 
-2. **Send to AI** — Data is POSTed to `/api/predict/full` on the
+2. **Send to AI** - Data is POSTed to `/api/predict/full` on the
    Node.js gateway, which validates the payload.
 
-3. **Analyse Data** — Three models run in the Python ML service:
+3. **Analyse Data** - Three models run in the Python ML service:
    - Random Forest + MLP predicts `rain_tomorrow`
    - Gradient Boosting + LSTM estimates `drought_index`
    - Multi-output DNN scores `crop_health` and `yield_estimate`
 
-4. **Give Advice** — The Advice Generator converts predictions into
+4. **Give Advice** - The Advice Generator converts predictions into
    plain-language, prioritised, actionable recommendations.
 
-5. **Track Results** — Farmers report real outcomes (did it rain?
+5. **Track Results** - Farmers report real outcomes (did it rain?
    what was the actual yield?) via `/api/feedback`. The system logs
    these and reports prediction accuracy trends.
 

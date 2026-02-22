@@ -1,5 +1,5 @@
 """
-main.py — AgriShield AI entry point.
+main.py - AgriShield AI entry point.
 
 Modes:
   train    : generate synthetic data and train all models
@@ -51,7 +51,7 @@ def run_retrain():
     DATA_PATH = os.path.join(ROOT, "data", "rwanda_agri_climate.csv")
 
     print("╔══════════════════════════════════════════════════════╗")
-    print("║  AgriShield AI — Full Retrain (Synthetic + Documents)║")
+    print("║  AgriShield AI - Full Retrain (Synthetic + Documents)║")
     print("╚══════════════════════════════════════════════════════╝\n")
     t0 = time.time()
 
@@ -68,7 +68,7 @@ def run_retrain():
         print(f"  Found {pdf_count} document(s) in {doc_folder}")
         print("  Parsing & merging forecast documents …")
     else:
-        print(f"  No documents found in {doc_folder} — using synthetic data only.")
+        print(f"  No documents found in {doc_folder} - using synthetic data only.")
 
     df = load_merged_dataset(synthetic_csv=DATA_PATH, documents_dir=doc_folder, save_merged=True)
     n_doc = int((df.get("source", "") == "document").sum()) if "source" in df.columns else 0
@@ -85,7 +85,7 @@ def run_retrain():
     print("\n► Step 4/4: Training Crop Health & Yield DNN …")
     train_crop_model(df_train)
 
-    print(f"\n✓ Done in {time.time()-t0:.1f}s — models saved to artifacts/")
+    print(f"\n✓ Done in {time.time()-t0:.1f}s - models saved to artifacts/")
 
 
 def run_serve():
@@ -96,7 +96,7 @@ def run_serve():
     _load_models()
 
     port = int(os.environ.get("FLASK_PORT", 5001))
-    print(f"\n► AgriShield AI Prediction Service running on http://0.0.0.0:{port}")
+    print(f"\n► Rwac V.0.1 Prediction Service running on http://0.0.0.0:{port}")
     print("  Endpoints: /health  /predict/rain  /predict/drought  /predict/crop  /predict/full")
     print("  Press Ctrl+C to stop.\n")
     app.run(host="0.0.0.0", port=port, debug=False)
@@ -105,7 +105,7 @@ def run_serve():
 def run_demo():
     """
     End-to-end demo using mock data for a farmer in Eastern Rwanda.
-    Does NOT require trained models — uses the demo fallback mode.
+    Does NOT require trained models - uses the demo fallback mode.
     """
     import requests
 
@@ -131,7 +131,7 @@ def run_demo():
     url = f"http://localhost:{port}/predict/full"
 
     print("\n╔══════════════════════════════════════════════════════╗")
-    print("║  AgriShield AI — DEMO Mode                           ║")
+    print("║  AgriShield AI - DEMO Mode                           ║")
     print("╚══════════════════════════════════════════════════════╝")
     print(f"\nSending sample record to {url} …")
     print(json.dumps(sample_record, indent=2))

@@ -1,5 +1,5 @@
 /**
- * AgriShield Dashboard Server
+ * Rwac V.0.1 Dashboard Server
  * Proxies requests to the HuggingFace Space API to avoid CORS issues,
  * then serves the static dashboard UI.
  */
@@ -58,7 +58,7 @@ app.get("/api/forecast/:region", async (req, res) => {
   }
 });
 
-// ── Proxy: GET /api/monthly/:region — 12-month ML forecast ───────────────────
+// ── Proxy: GET /api/monthly/:region - 12-month ML forecast ───────────────────
 app.get("/api/monthly/:region", async (req, res) => {
   try {
     const { region }   = req.params;
@@ -80,6 +80,6 @@ app.get("*", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n  AgriShield Dashboard running at http://localhost:${PORT}`);
+  console.log(`\n  Rwac V.0.1 Dashboard running at http://localhost:${PORT}`);
   console.log(`  Proxying ML API → ${ML_API}\n`);
 });

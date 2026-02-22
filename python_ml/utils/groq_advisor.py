@@ -37,7 +37,7 @@ def _get_client():
 
 
 # ── System prompt ─────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are AgriShield, an expert agricultural AI advisor specialising in
+SYSTEM_PROMPT = """You are Rwac V.0.1, an expert agricultural AI advisor specialising in
 Rwanda's smallholder farming systems. You have deep knowledge of:
 - Rwanda's bimodal rainfall calendar (Season A: March-May, Season B: September-November)
 - Key staple crops: maize, beans, sorghum, cassava, sweet potato
@@ -51,10 +51,10 @@ You receive structured data from three AI models:
   3. Crop Health & Yield Model (multi-output PyTorch DNN)
 
 Your job: convert these ML outputs into CONCRETE, ACTIONABLE advice for the farmer.
-Be specific, practical, and direct. Use simple language — assume the farmer has a
+Be specific, practical, and direct. Use simple language - assume the farmer has a
 primary school education. Prioritize the most urgent action first.
 
-ALWAYS respond with a valid JSON object — no extra text before or after — in this exact structure:
+ALWAYS respond with a valid JSON object - no extra text before or after - in this exact structure:
 {
   "priority_action": "Single most urgent action in one sentence.",
   "rain_management": ["tip 1", "tip 2"],
@@ -78,7 +78,7 @@ def _build_user_message(record: dict, rain: dict, drought: dict,
     return f"""
 === REAL-TIME FARM REPORT ===
 Date/Time  : {record.get("_fetched_at", "now")}
-Location   : {record.get("region", "Unknown")} Province — {record.get("_station", "")}
+Location   : {record.get("region", "Unknown")} Province - {record.get("_station", "")}
 Weather Source: {weather_source}
 Crop       : {record.get("crop_type", "unknown")} on {record.get("soil_type", "unknown")} soil
 Season     : {record.get("season", "unknown")}
@@ -126,7 +126,7 @@ def generate_groq_advice(record: dict, rain: dict, drought: dict,
     Falls back to None on error (caller uses rule-based fallback).
     """
     if not GROQ_API_KEY:
-        log.warning("[Groq] API key not set — skipping LLM advice.")
+        log.warning("[Groq] API key not set - skipping LLM advice.")
         return None
 
     try:

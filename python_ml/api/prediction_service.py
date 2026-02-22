@@ -1,6 +1,6 @@
 """
 prediction_service.py
-Flask REST API — exposes all three AI models as HTTP endpoints.
+Flask REST API - exposes all three AI models as HTTP endpoints.
 Node.js backend calls these endpoints to serve farmers.
 
 Endpoints:
@@ -92,7 +92,7 @@ def _load_models():
         log.info("All models loaded successfully.")
     except Exception as e:
         log.error(f"Model loading failed: {e}")
-        log.warning("Running in DEMO mode — returning mock predictions.")
+        log.warning("Running in DEMO mode - returning mock predictions.")
         MODELS = {"demo": True}
 
 
@@ -116,7 +116,7 @@ def _safe_preprocess(record: dict, model_name: str) -> np.ndarray:
 @app.route("/", methods=["GET"])
 def index():
     return jsonify({
-        "service": "AgriShield AI — Rwanda Agricultural Prediction API",
+        "service": "Rwac V.0.1 - Rwanda Agricultural Prediction API",
         "version": "1.0.0",
         "status": "running",
         "endpoints": {
@@ -143,7 +143,7 @@ def health():
     return jsonify({
         "status": "ok",
         "models_loaded": "demo" not in MODELS,
-        "service": "AgriShield AI Prediction Service",
+        "service": "Rwac V.0.1 Prediction Service",
         "version": "1.0.0",
     })
 
@@ -256,7 +256,7 @@ def _run_realtime_pipeline(region: str, crop_type: str,
     """Shared logic for both realtime endpoints."""
     _load_models()
 
-    # 1 — Fetch real weather from Open-Meteo
+    # 1 - Fetch real weather from Open-Meteo
     record = fetch_current_weather(
         region=region,
         crop_type=crop_type,
@@ -396,7 +396,7 @@ def climate_forecast(region: str = None):
     """
     Run a 5-year Holt-Winters climate forecast from 10 years of real Open-Meteo data.
     Query params:
-      region     (str)  : Rwanda province — Northern/Eastern/Southern/Western/Kigali
+      region     (str)  : Rwanda province - Northern/Eastern/Southern/Western/Kigali
       start_year (int)  : first year of historical window (default: 2015)
     Returns:
       JSON with monthly forecasts 2026-2030 + summary statistics.
@@ -545,14 +545,14 @@ def _mock_rain():
 
 def _mock_drought():
     return {"prediction": {"level": "mild", "score": 0.30,
-                           "message": "Mild dryness — monitor soil moisture closely."}}
+                           "message": "Mild dryness - monitor soil moisture closely."}}
 
 def _mock_crop():
     return {"prediction": {
         "crop_health_score": 68.5,
         "yield_estimate_kg_ha": 1400.0,
         "pest": {"level": "low", "pest_pressure_index": 0.18,
-                 "message": "Pest pressure is low — routine monitoring sufficient."}
+                 "message": "Pest pressure is low - routine monitoring sufficient."}
     }}
 
 
@@ -561,5 +561,5 @@ def _mock_crop():
 if __name__ == "__main__":
     _load_models()
     port = int(os.environ.get("FLASK_PORT", 5001))
-    log.info(f"AgriShield AI Service starting on port {port} …")
+    log.info(f"Rwac V.0.1 Service starting on port {port} …")
     app.run(host="0.0.0.0", port=port, debug=False)

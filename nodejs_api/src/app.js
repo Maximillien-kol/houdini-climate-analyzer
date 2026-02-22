@@ -1,4 +1,4 @@
-// src/app.js — Express application configuration
+// src/app.js - Express application configuration
 
 const express     = require("express");
 const cors        = require("cors");
@@ -29,7 +29,7 @@ const limiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: "Too many requests — please try again later." },
+  message: { success: false, error: "Too many requests - please try again later." },
 });
 app.use("/api/", limiter);
 
@@ -51,7 +51,7 @@ app.use("/api/feedback",  feedbackRouter);
 // ── Root ──────────────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({
-    service: "AgriShield AI — Food Insecurity & Climate Vulnerability API",
+    service: "Rwac V.0.1 - Food Insecurity & Climate Vulnerability API",
     version: "1.0.0",
     status: "running",
     docs: "See README.md for full API documentation.",

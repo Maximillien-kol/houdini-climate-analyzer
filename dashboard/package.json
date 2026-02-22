@@ -1,0 +1,15 @@
+{
+  "name": "rwac-dashboard",
+  "version": "1.0.0",
+  "description": "Rwac V.0.1 – real-time web dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^3.0.0"
+  }
+}

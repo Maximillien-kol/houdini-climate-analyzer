@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AgriShield AI — Rwanda Climate Dashboard</title>
+<title>Rwac V.0.1 - Rwanda Climate Dashboard</title>
 <style>
   /* ── Reset & base ───────────────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -227,14 +227,14 @@
 <!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header>
   <div class="logo">
-    <span class="logo-icon">🌱</span>
+    <span class="logo-icon"></span>
     <div class="logo-text">
-      <h1>AgriShield AI</h1>
+      <h1>Rwac V.0.1</h1>
       <p>Rwanda Agricultural Climate Intelligence</p>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:1rem;">
-    <span class="timestamp" id="last-updated">—</span>
+    <span class="timestamp" id="last-updated">-</span>
     <div class="status-badge">
       <div class="status-dot loading" id="status-dot"></div>
       <span id="status-text">Connecting…</span>
@@ -248,94 +248,16 @@
   <!-- Region selector -->
   <p class="section-title">Select Region</p>
   <div class="region-tabs" id="region-tabs">
-    <button class="region-btn active" data-region="Northern"  onclick="selectRegion(this)">🏔 Northern</button>
-    <button class="region-btn"        data-region="Southern"  onclick="selectRegion(this)">🌿 Southern</button>
-    <button class="region-btn"        data-region="Eastern"   onclick="selectRegion(this)">🌾 Eastern</button>
-    <button class="region-btn"        data-region="Western"   onclick="selectRegion(this)">🌊 Western</button>
-    <button class="region-btn"        data-region="Kigali"    onclick="selectRegion(this)">🏙 Kigali</button>
-  </div>
-
-  <!-- Auto-refresh countdown -->
-  <div class="refresh-row">
-    <span>Auto-refresh</span>
-    <div id="refresh-progress"><div id="refresh-fill"></div></div>
-    <button class="btn btn-outline" onclick="loadRealtime()" style="padding:0.3rem 0.9rem;font-size:0.78rem;">⟳ Refresh now</button>
-  </div>
-
-  <!-- ── Realtime prediction cards ──────────────────────────────────────────── -->
-  <p class="section-title">Live Predictions</p>
-  <div class="grid-3" id="cards">
-    <!-- Rain -->
-    <div class="card" id="card-rain">
-      <div class="card-header">
-        <span class="card-label">Rain Tomorrow</span>
-        <span class="card-icon">🌧</span>
-      </div>
-      <div class="card-value" id="val-rain"><span class="skeleton skeleton-value" style="width:60%">&nbsp;</span></div>
-      <div class="card-sub"  id="sub-rain"><span class="skeleton skeleton-text" style="width:80%">&nbsp;</span></div>
-      <div id="badge-rain"></div>
-      <div class="progress-bar"><div class="progress-fill fill-blue" id="bar-rain" style="width:0%"></div></div>
-    </div>
-
-    <!-- Drought -->
-    <div class="card" id="card-drought">
-      <div class="card-header">
-        <span class="card-label">Drought Risk</span>
-        <span class="card-icon">☀</span>
-      </div>
-      <div class="card-value" id="val-drought"><span class="skeleton skeleton-value" style="width:50%">&nbsp;</span></div>
-      <div class="card-sub"  id="sub-drought"><span class="skeleton skeleton-text" style="width:70%">&nbsp;</span></div>
-      <div id="badge-drought"></div>
-      <div class="progress-bar"><div class="progress-fill fill-amber" id="bar-drought" style="width:0%"></div></div>
-    </div>
-
-    <!-- Crop -->
-    <div class="card" id="card-crop">
-      <div class="card-header">
-        <span class="card-label">Crop Health</span>
-        <span class="card-icon">🌿</span>
-      </div>
-      <div class="card-value" id="val-crop"><span class="skeleton skeleton-value" style="width:55%">&nbsp;</span></div>
-      <div class="card-sub"  id="sub-crop"><span class="skeleton skeleton-text" style="width:80%">&nbsp;</span></div>
-      <div id="badge-crop"></div>
-      <div class="progress-bar"><div class="progress-fill fill-green" id="bar-crop" style="width:0%"></div></div>
-    </div>
-  </div>
-
-  <!-- ── Weather input cards ─────────────────────────────────────────────────── -->
-  <div class="grid-3" id="weather-cards" style="display:none">
-    <div class="card">
-      <div class="card-header"><span class="card-label">Temperature</span><span class="card-icon">🌡</span></div>
-      <div class="card-value" id="val-temp">—</div>
-      <div class="card-sub">°C</div>
-    </div>
-    <div class="card">
-      <div class="card-header"><span class="card-label">Humidity</span><span class="card-icon">💧</span></div>
-      <div class="card-value" id="val-humid">—</div>
-      <div class="card-sub">%</div>
-    </div>
-    <div class="card">
-      <div class="card-header"><span class="card-label">Rainfall</span><span class="card-icon">🌂</span></div>
-      <div class="card-value" id="val-rainfall">—</div>
-      <div class="card-sub">mm</div>
-    </div>
-  </div>
-
-  <!-- ── Priority action + advice ───────────────────────────────────────────── -->
-  <p class="section-title">AI Advice</p>
-  <div class="card advice-card" id="advice-panel">
-    <div class="priority-banner" id="priority-banner" style="display:none">
-      <span class="priority-icon">⚡</span>
-      <div class="priority-text" id="priority-text">—</div>
-    </div>
-    <div class="advice-cols" id="advice-cols">
-      <div style="color:var(--muted);font-size:0.85rem;">Load a region to see AI recommendations…</div>
-    </div>
+    <button class="region-btn active" data-region="Northern"  onclick="selectRegion(this)">Northern</button>
+    <button class="region-btn"        data-region="Southern"  onclick="selectRegion(this)">Southern</button>
+    <button class="region-btn"        data-region="Eastern"   onclick="selectRegion(this)">Eastern</button>
+    <button class="region-btn"        data-region="Western"   onclick="selectRegion(this)">Western</button>
+    <button class="region-btn"        data-region="Kigali"    onclick="selectRegion(this)">Kigali</button>
   </div>
 
   <!-- ── 12-Month Forecast Chart ─────────────────────────────────────────────── -->
   <p class="section-title" style="display:flex;align-items:center;gap:0.5rem;">
-    📅 12-Month Agricultural Forecast
+    12-Month Agricultural Forecast
     <span id="monthly-confidence-badge" style="font-size:0.72rem;padding:2px 8px;border-radius:12px;background:#1e3a5f;color:#7dd3fc;font-weight:500;"></span>
     <span id="monthly-source-badge" style="font-size:0.72rem;padding:2px 8px;border-radius:12px;background:#1a3a2a;color:#6ee7b7;font-weight:500;"></span>
   </p>
@@ -354,7 +276,6 @@
     <div style="position:relative;height:260px;">
       <canvas id="monthly-chart"></canvas>
     </div>
-    <!-- Month table -->
     <div style="overflow-x:auto;margin-top:1.25rem;">
       <table id="monthly-table" style="width:100%;border-collapse:collapse;font-size:0.78rem;">
         <thead>
@@ -371,6 +292,18 @@
         </thead>
         <tbody id="monthly-tbody"><tr><td colspan="8" style="color:var(--muted);padding:8px;">Loading forecast…</td></tr></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ── Priority action + advice ───────────────────────────────────────────── -->
+  <p class="section-title">AI Advice</p>
+  <div class="card advice-card" id="advice-panel">
+    <div class="priority-banner" id="priority-banner" style="display:none">
+      <span class="priority-icon"></span>
+      <div class="priority-text" id="priority-text">-</div>
+    </div>
+    <div class="advice-cols" id="advice-cols">
+      <div style="color:var(--muted);font-size:0.85rem;">Load a region to see AI recommendations…</div>
     </div>
   </div>
 
@@ -468,27 +401,27 @@
     <div class="grid-3">
       <div class="card">
         <div class="card-header"><span class="card-label">Rain Tomorrow</span><span class="card-icon">🌧</span></div>
-        <div class="card-value" id="m-rain">—</div>
-        <div class="card-sub"  id="m-rain-prob">—</div>
+        <div class="card-value" id="m-rain">-</div>
+        <div class="card-sub"  id="m-rain-prob">-</div>
         <div id="m-rain-badge"></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-label">Drought Risk</span><span class="card-icon">☀</span></div>
-        <div class="card-value" id="m-drought">—</div>
-        <div class="card-sub"  id="m-drought-lvl">—</div>
+        <div class="card-value" id="m-drought">-</div>
+        <div class="card-sub"  id="m-drought-lvl">-</div>
         <div id="m-drought-badge"></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-label">Crop Health</span><span class="card-icon">🌿</span></div>
-        <div class="card-value" id="m-crop">—</div>
-        <div class="card-sub"  id="m-crop-yield">—</div>
+        <div class="card-value" id="m-crop">-</div>
+        <div class="card-sub"  id="m-crop-yield">-</div>
         <div id="m-crop-badge"></div>
       </div>
     </div>
     <div class="card advice-card" id="m-advice-panel">
       <div class="priority-banner" id="m-priority-banner">
-        <span class="priority-icon">⚡</span>
-        <div class="priority-text" id="m-priority-text">—</div>
+        <span class="priority-icon"></span>
+        <div class="priority-text" id="m-priority-text">-</div>
       </div>
       <div class="advice-cols" id="m-advice-cols"></div>
     </div>
@@ -768,7 +701,7 @@ function renderPredictions(d) {
 
   // Crop
   const cropScore = p.crop_health?.score ?? p.health_score ?? 0;
-  const cropYield = p.crop_health?.yield_estimate_kg_ha ?? "—";
+  const cropYield = p.crop_health?.yield_estimate_kg_ha ?? "-";
   const cropPct   = Math.round(cropScore);
   const cropColor  = cropPct > 65 ? "green" : cropPct > 40 ? "amber" : "red";
   set("val-crop",    cropPct + "/100");
@@ -780,9 +713,9 @@ function renderPredictions(d) {
   // Weather inputs (if present)
   const w = d.weather_input || d.inputs || d.report?.location || {};
   if (w.temperature_c != null) {
-    set("val-temp",    w.temperature_c?.toFixed(1) || "—");
-    set("val-humid",   w.humidity_pct?.toFixed(0) || "—");
-    set("val-rainfall",w.rainfall_mm?.toFixed(1) || "—");
+    set("val-temp",    w.temperature_c?.toFixed(1) || "-");
+    set("val-humid",   w.humidity_pct?.toFixed(0) || "-");
+    set("val-rainfall",w.rainfall_mm?.toFixed(1) || "-");
     document.getElementById("weather-cards").style.display = "grid";
   }
 
@@ -802,10 +735,10 @@ function renderAdvice(advice, priority, bannerId, textId, colsId) {
     banner.style.display = "none";
   }
   const labels = {
-    rain_management: "🌧 Rain Management",
-    drought_management: "☀ Drought Management",
-    crop_management: "🌾 Crop Management",
-    seasonal_tips: "📅 Seasonal Tips"
+    rain_management: "Rain Management",
+    drought_management: "Drought Management",
+    crop_management: "Crop Management",
+    seasonal_tips: "Seasonal Tips"
   };
   const cols = document.getElementById(colsId);
   if (!advice || !Object.keys(advice).length) {
@@ -868,7 +801,7 @@ function renderManualResult(d) {
   const droughtScore = p.drought?.score ?? 0;
   const droughtLvl = p.drought?.level ?? classify_drought(droughtScore);
   const cropScore  = p.crop_health?.score ?? 0;
-  const cropYield  = p.crop_health?.yield_estimate_kg_ha ?? "—";
+  const cropYield  = p.crop_health?.yield_estimate_kg_ha ?? "-";
   const droughtColor = droughtScore < 0.3 ? "green" : droughtScore < 0.6 ? "amber" : "red";
   const cropColor  = cropScore > 65 ? "green" : cropScore > 40 ? "amber" : "red";
 
