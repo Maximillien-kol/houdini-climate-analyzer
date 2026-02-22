@@ -7,6 +7,56 @@ prioritised advice through a REST API.
 
 ---
 
+## Quick Start (one command)
+
+```bash
+python run.py
+```
+
+This single command will:
+1. Install all Python and Node.js dependencies
+2. Train all AI models — automatically includes any PDF/DOCX forecast
+   documents found in `python_ml/data/documents/monthly_forecasts/`
+3. Start the Python ML service on **port 5001**
+4. Start the Node.js API gateway on **port 3000**
+
+Press **Ctrl+C** to stop both services.
+
+### Other commands
+
+```bash
+python run.py retrain    # re-parse documents + retrain models
+python run.py serve      # start both servers (models already trained)
+python run.py install    # install dependencies only
+python run.py train      # synthetic-only training (no documents)
+```
+
+### Adding real Meteorwanda forecast documents
+
+Download monthly PDFs from https://www.meteorwanda.gov.rw/products/monthly-forecast
+and place them in the matching year folder:
+
+```
+python_ml/data/documents/monthly_forecasts/
+├── 2025/
+│   ├── Weather_Forecast_for_November_2025.pdf
+│   └── Weather_Forecast_for_December_2025.pdf
+└── 2026/
+    ├── Weather_Forecast_for_January_2026.pdf
+    └── Weather_Forecast_for_February_2026.pdf
+```
+
+Then retrain:
+
+```bash
+python run.py retrain
+```
+
+Real document rows are weighted **2.5×** over synthetic data so models
+learn from official Rwanda climate signals.
+
+---
+
 ## Architecture
 
 ```
@@ -51,42 +101,25 @@ prioritised advice through a REST API.
 
 ---
 
-## Quick Start
+## Manual Start (advanced)
 
-### 1 — Install Python dependencies
+If you prefer to run each component individually:
+
 ```bash
+# 1 — Python dependencies
 cd python_ml
 pip install -r requirements.txt
-```
 
-### 2 — Train all models
-```bash
-python main.py train
-```
-This generates 1,095 days of synthetic Rwanda agricultural data, trains:
-- **Random Forest + PyTorch MLP** — rain prediction
-- **Gradient Boosting + PyTorch LSTM** — drought risk
-- **Multi-output PyTorch DNN** — crop health & yield
+# 2 — Train models (includes documents if present)
+python main.py retrain
 
-Artifacts are saved to `python_ml/artifacts/`.
-
-### 3 — Start the Python ML service
-```bash
+# 3 — Start Python ML service
 python main.py serve
-# Listening on http://localhost:5001
-```
 
-### 4 — Install Node.js dependencies
-```bash
+# 4 — In a second terminal: Node.js API
 cd nodejs_api
-cp .env.example .env
 npm install
-```
-
-### 5 — Start the Node.js API gateway
-```bash
 npm start
-# Listening on http://localhost:3000
 ```
 
 ---
@@ -204,10 +237,21 @@ npm start
 ## Project Structure
 ```
 HOODINI/
+├── run.py                            ← master launcher (start here)
+│
 ├── python_ml/
 │   ├── data/
 │   │   ├── generate_data.py          ← synthetic Rwanda dataset
-│   │   └── rwanda_agri_climate.csv   ← generated after `train`
+│   │   ├── document_parser.py        ← PDF/DOCX forecast parser
+│   │   ├── document_integrator.py    ← merges real docs + synthetic data
+│   │   ├── rwanda_agri_climate.csv   ← generated after retrain
+│   │   ├── rwanda_agri_climate_merged.csv  ← merged dataset (real + synthetic)
+│   │   └── documents/
+│   │       ├── README.md             ← how to add forecast PDFs
+│   │       └── monthly_forecasts/
+│   │           ├── 2020/ … 2024/     ← drop historical PDFs here
+│   │           ├── 2025/             ← Weather_Forecast_for_*.pdf
+│   │           └── 2026/
 │   ├── models/
 │   │   ├── rain_prediction_model.py  ← RF + MLP
 │   │   ├── drought_risk_model.py     ← GB + LSTM
@@ -218,7 +262,7 @@ HOODINI/
 │   │   └── advice_generator.py       ← rules + feedback log
 │   ├── api/
 │   │   └── prediction_service.py     ← Flask REST API
-│   ├── artifacts/                    ← saved models (created at train time)
+│   ├── artifacts/                    ← saved models (created at retrain)
 │   ├── requirements.txt
 │   └── main.py                       ← CLI entry point
 │

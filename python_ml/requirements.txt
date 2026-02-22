@@ -26,3 +26,9 @@ python-dotenv>=1.0.0
 
 # Optional: time-series (Prophet-style analysis)
 # prophet>=1.1.5   # uncomment if you have C++ build tools
+
+# Document parsing (PDF + DOCX training data from Meteorwanda)
+# Install both for full support:
+pdfplumber>=0.11.0        # PDF table + text extraction (recommended)
+python-docx>=1.1.0        # DOCX / .doc file parsing
+# PyMuPDF>=1.24.0         # alternative PDF engine (uncomment if pdfplumber has issues)

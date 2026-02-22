@@ -2,13 +2,15 @@
 main.py — AgriShield AI entry point.
 
 Modes:
-  train    : generate data and train all models
+  train    : generate synthetic data and train all models
+  retrain  : parse documents + generate data + train all models  ← use this
   serve    : start the Flask prediction API
   demo     : run a quick end-to-end demo prediction (no trained models needed)
   feedback : show feedback / drift summary
 
 Usage:
-  python main.py train
+  python main.py retrain          # includes PDF/DOCX documents in training
+  python main.py train            # synthetic data only
   python main.py serve
   python main.py demo
   python main.py feedback
@@ -25,6 +27,65 @@ sys.path.insert(0, ROOT)
 def run_train():
     from models.train_models import main as train_main
     train_main()
+
+
+def run_retrain():
+    """
+    Full retrain: generates synthetic data, parses any PDF/DOCX documents
+    in data/documents/, merges them, then trains all models.
+    This is the recommended command after adding new forecast documents.
+    """
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s  %(levelname)-8s  %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    from data.generate_data import generate_dataset
+    from data.document_integrator import load_merged_dataset, DOCUMENTS_DIR
+    from models.rain_prediction_model import train_rain_model
+    from models.drought_risk_model import train_drought_model
+    from models.crop_health_model import train_crop_model
+    import time
+
+    DATA_PATH = os.path.join(ROOT, "data", "rwanda_agri_climate.csv")
+
+    print("╔══════════════════════════════════════════════════════╗")
+    print("║  AgriShield AI — Full Retrain (Synthetic + Documents)║")
+    print("╚══════════════════════════════════════════════════════╝\n")
+    t0 = time.time()
+
+    print("► Step 1/4: Generating synthetic dataset …")
+    df_synthetic = generate_dataset(n_days=1095, output_path=DATA_PATH)
+    print(f"  {len(df_synthetic):,} synthetic records generated.")
+
+    doc_folder = os.path.abspath(DOCUMENTS_DIR)
+    pdf_count = sum(
+        1 for _, _, files in os.walk(doc_folder)
+        for f in files if f.lower().endswith((".pdf", ".docx", ".doc"))
+    )
+    if pdf_count:
+        print(f"  Found {pdf_count} document(s) in {doc_folder}")
+        print("  Parsing & merging forecast documents …")
+    else:
+        print(f"  No documents found in {doc_folder} — using synthetic data only.")
+
+    df = load_merged_dataset(synthetic_csv=DATA_PATH, documents_dir=doc_folder, save_merged=True)
+    n_doc = int((df.get("source", "") == "document").sum()) if "source" in df.columns else 0
+    print(f"  Training set: {len(df):,} rows ({len(df_synthetic):,} synthetic + {n_doc:,} from documents)\n")
+
+    df_train = df.drop(columns=[c for c in ["source", "data_weight"] if c in df.columns])
+
+    print("► Step 2/4: Training Rain Prediction models …")
+    train_rain_model(df_train)
+
+    print("\n► Step 3/4: Training Drought Risk models …")
+    train_drought_model(df_train)
+
+    print("\n► Step 4/4: Training Crop Health & Yield DNN …")
+    train_crop_model(df_train)
+
+    print(f"\n✓ Done in {time.time()-t0:.1f}s — models saved to artifacts/")
 
 
 def run_serve():
@@ -101,9 +162,10 @@ def run_feedback():
 
 
 COMMANDS = {
-    "train": run_train,
-    "serve": run_serve,
-    "demo":  run_demo,
+    "train":    run_train,
+    "retrain":  run_retrain,
+    "serve":    run_serve,
+    "demo":     run_demo,
     "feedback": run_feedback,
 }
 
